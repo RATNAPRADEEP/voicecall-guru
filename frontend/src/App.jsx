@@ -64,6 +64,13 @@ function reducer(state, action) {
   }
 }
 
+function actionClass(base, stepId, state) {
+  if (state.completed || stepId !== LESSON[state.stepIndex]?.id) return base;
+  if (state.assistance === 3) return `${base} target`;
+  if (state.assistance === 2) return `${base} hint`;
+  return base;
+}
+
 export default function App() {
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     loadLearningState(createInitialLearningState)
@@ -71,7 +78,8 @@ export default function App() {
   const [cloudStatus, setCloudStatus] = useState(isCloudPersistenceConfigured() ? 'Connecting…' : 'Local practice');
   const [cloudLoaded, setCloudLoaded] = useState(!isCloudPersistenceConfigured());
   const step = LESSON[state.stepIndex];
-  const progress = `${state.stepIndex + (state.completed ? 1 : 0)} / ${LESSON.length}`;
+  const displayedStep = state.completed ? LESSON.length : state.stepIndex + 1;
+  const progressPercent = state.completed ? 100 : (state.stepIndex / LESSON.length) * 100;
 
   useEffect(() => {
     saveLearningState(state);
@@ -142,11 +150,11 @@ export default function App() {
             {state.completed ? 'You did it independently.' : getStepInstruction(state)}
           </p>
           <div className="progress-row">
-            <span>Step {progress}</span>
+            <span>Step {displayedStep} / {LESSON.length}</span>
             <span>{ASSISTANCE[state.assistance]}</span>
           </div>
           <div className="progress-track">
-            <span style={{ width: `${state.completed ? 100 : (state.stepIndex / LESSON.length) * 100}%` }} />
+            <span style={{ width: `${progressPercent}%` }} />
           </div>
           <div className="feedback" aria-live="polite">
             {state.message || 'Listen to the instruction, then touch the correct picture.'}
@@ -170,7 +178,7 @@ export default function App() {
               <div className="phone-title">Phone</div>
               <div className="phone-grid">
                 <button
-                  className={step.id === 'phone' ? 'phone-action target' : 'phone-action'}
+                  className={actionClass('phone-action', 'phone', state)}
                   onClick={() => handleAction('phone')}
                   aria-label="Phone"
                 >
@@ -184,7 +192,7 @@ export default function App() {
               {step.id !== 'phone' && !state.completed && (
                 <div className="contacts-view">
                   <p className="mini-title">Contacts</p>
-                  <button className={step.id === 'contact' ? 'contact-card target' : 'contact-card'} onClick={() => handleAction('contact')}>
+                  <button className={actionClass('contact-card', 'contact', state)} onClick={() => handleAction('contact')}>
                     <span className="avatar">👩</span>
                     <span><strong>Daughter</strong><small>Family</small></span>
                   </button>
@@ -196,7 +204,7 @@ export default function App() {
               )}
 
               {step.id === 'call' && !state.completed && (
-                <button className="call-button target" onClick={() => handleAction('call')}>☎ Call</button>
+                <button className={actionClass('call-button', 'call', state)} onClick={() => handleAction('call')}>☎ Call</button>
               )}
 
               {state.completed && (
