@@ -5,6 +5,7 @@ import {
   applyAction,
   createInitialLearningState,
   getMasteryLabel,
+  getStepInstruction,
   startNextAttempt
 } from './learning/lessonEngine';
 import { clearLearningState, loadLearningState, saveLearningState } from './learning/persistence';
@@ -28,6 +29,13 @@ function profileToLearningState(profile, fallback) {
     completed,
     message: completed ? 'You did it independently.' : 'Your progress was restored from the cloud.'
   };
+}
+
+function hasCloudProgress(profile) {
+  return Boolean(
+    profile &&
+    ((profile.masteredSkills || []).length > 0 || Number(profile.attempts) > 1 || Number(profile.mistakes) > 0)
+  );
 }
 
 function stateToLearnerProfile(state) {
@@ -75,9 +83,9 @@ export default function App() {
     const controller = new AbortController();
     loadCloudLearner(LEARNER_ID, controller.signal)
       .then((profile) => {
-        if (profile) dispatch({ type: 'HYDRATE_PROFILE', profile });
+        if (hasCloudProgress(profile)) dispatch({ type: 'HYDRATE_PROFILE', profile });
         setCloudLoaded(true);
-        setCloudStatus('Cloud connected');
+        setCloudStatus(hasCloudProgress(profile) ? 'Cloud progress restored' : 'Cloud connected');
       })
       .catch((error) => {
         if (error.name === 'AbortError') return;
@@ -131,7 +139,7 @@ export default function App() {
           <p className="section-label">TODAY'S LESSON</p>
           <h2>Call your daughter</h2>
           <p className="instruction">
-            {state.completed ? 'You did it independently.' : step.prompt}
+            {state.completed ? 'You did it independently.' : getStepInstruction(state)}
           </p>
           <div className="progress-row">
             <span>Step {progress}</span>
