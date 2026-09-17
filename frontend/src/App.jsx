@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import {
   ASSISTANCE,
   LESSON,
@@ -8,11 +8,49 @@ import {
   startNextAttempt
 } from './learning/lessonEngine';
 import { clearLearningState, loadLearningState, saveLearningState } from './learning/persistence';
+import { isCloudPersistenceConfigured, loadCloudLearner, saveCloudLearner } from './learning/apiClient';
+
+const LEARNER_ID = 'demo-learner';
+
+function profileToLearningState(profile, fallback) {
+  if (!profile) return fallback;
+
+  const mastered = new Set(profile.masteredSkills || []);
+  const completed = mastered.has('call_button');
+  const stepIndex = completed ? LESSON.length - 1 : mastered.has('contact_photo') ? 2 : mastered.has('phone_icon') ? 1 : 0;
+
+  return {
+    ...fallback,
+    stepIndex,
+    attempt: Math.max(1, Number(profile.attempts) || 1),
+    assistance: Math.min(3, Math.max(1, Number(profile.assistance) || 3)),
+    mistakes: Math.max(0, Number(profile.mistakes) || 0),
+    completed,
+    message: completed ? 'You did it independently.' : 'Your progress was restored from the cloud.'
+  };
+}
+
+function stateToLearnerProfile(state) {
+  const masteredSkills = [];
+  if (state.stepIndex >= 1 || state.completed) masteredSkills.push('phone_icon');
+  if (state.stepIndex >= 2 || state.completed) masteredSkills.push('contact_photo');
+  if (state.completed) masteredSkills.push('call_button');
+
+  return {
+    learnerId: LEARNER_ID,
+    language: 'en-IN',
+    assistance: state.assistance,
+    masteredSkills,
+    attempts: state.attempt,
+    mistakes: state.mistakes
+  };
+}
 
 function reducer(state, action) {
   switch (action.type) {
     case 'ACTION': return applyAction(state, action.value);
     case 'NEXT_ATTEMPT': return startNextAttempt(state);
+    case 'HYDRATE_PROFILE': return profileToLearningState(action.profile, state);
     case 'RESET': return createInitialLearningState();
     default: return state;
   }
@@ -22,12 +60,51 @@ export default function App() {
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     loadLearningState(createInitialLearningState)
   );
+  const [cloudStatus, setCloudStatus] = useState(isCloudPersistenceConfigured() ? 'Connecting…' : 'Local practice');
+  const [cloudLoaded, setCloudLoaded] = useState(!isCloudPersistenceConfigured());
   const step = LESSON[state.stepIndex];
   const progress = `${state.stepIndex + (state.completed ? 1 : 0)} / ${LESSON.length}`;
 
   useEffect(() => {
     saveLearningState(state);
   }, [state]);
+
+  useEffect(() => {
+    if (!isCloudPersistenceConfigured()) return undefined;
+
+    const controller = new AbortController();
+    loadCloudLearner(LEARNER_ID, controller.signal)
+      .then((profile) => {
+        if (profile) dispatch({ type: 'HYDRATE_PROFILE', profile });
+        setCloudLoaded(true);
+        setCloudStatus('Cloud connected');
+      })
+      .catch((error) => {
+        if (error.name === 'AbortError') return;
+        setCloudLoaded(true);
+        setCloudStatus('Local fallback');
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    if (!cloudLoaded || !isCloudPersistenceConfigured()) return undefined;
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      saveCloudLearner(LEARNER_ID, stateToLearnerProfile(state), controller.signal)
+        .then(() => setCloudStatus('Cloud synced'))
+        .catch((error) => {
+          if (error.name !== 'AbortError') setCloudStatus('Local fallback');
+        });
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [state, cloudLoaded]);
 
   function handleAction(action) {
     dispatch({ type: 'ACTION', value: action });
@@ -74,6 +151,7 @@ export default function App() {
           <button className="secondary-button" onClick={resetProgress}>
             Reset Practice
           </button>
+          <p className="persistence-status" aria-live="polite">{cloudStatus}</p>
         </aside>
 
         <section className="phone-stage" aria-label="Smartphone simulator">
