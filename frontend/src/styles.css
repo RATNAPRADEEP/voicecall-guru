@@ -1,0 +1,63 @@
+* { box-sizing: border-box; }
+
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #172033;
+  background: #f5f7fb;
+  font-synthesis: none;
+}
+
+body { margin: 0; min-width: 320px; }
+button { font: inherit; }
+
+.app-shell { max-width: 1180px; margin: 0 auto; padding: 36px 24px 48px; }
+.hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 28px; }
+.eyebrow, .section-label { margin: 0 0 8px; font-size: 12px; font-weight: 800; letter-spacing: .12em; color: #65718a; }
+h1 { margin: 0; font-size: clamp(34px, 6vw, 58px); line-height: 1; }
+h2 { margin: 4px 0 10px; font-size: 30px; }
+.tagline { margin: 12px 0 0; font-weight: 650; color: #536079; }
+.status-pill { padding: 10px 14px; border: 1px solid #dce2ee; border-radius: 999px; background: white; font-weight: 700; }
+.dashboard { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(320px, 1fr); gap: 28px; align-items: stretch; }
+.learning-panel { padding: 30px; border: 1px solid #dfe5ef; border-radius: 24px; background: white; box-shadow: 0 16px 50px rgba(34, 48, 75, .08); }
+.instruction { min-height: 58px; font-size: 21px; line-height: 1.4; }
+.progress-row { display: flex; justify-content: space-between; margin-top: 26px; font-size: 14px; font-weight: 750; color: #56627a; }
+.progress-track { height: 10px; margin: 10px 0 20px; overflow: hidden; border-radius: 999px; background: #e9edf5; }
+.progress-track span { display: block; height: 100%; border-radius: inherit; background: #3157d5; transition: width .3s ease; }
+.feedback { min-height: 64px; padding: 15px; border-radius: 14px; background: #f1f4fa; line-height: 1.45; }
+.primary-button { width: 100%; margin-top: 18px; padding: 14px 18px; border: 0; border-radius: 14px; background: #172033; color: white; cursor: pointer; font-weight: 800; }
+.phone-stage { display: grid; place-items: center; padding: 24px; border-radius: 24px; background: #e9edf5; }
+.phone { width: min(300px, 82vw); padding: 12px; border-radius: 34px; background: #171b25; box-shadow: 0 24px 55px rgba(24, 31, 48, .25); }
+.phone-speaker { width: 65px; height: 5px; margin: 2px auto 9px; border-radius: 10px; background: #4c5360; }
+.phone-screen { min-height: 520px; padding: 14px; overflow: hidden; border-radius: 24px; background: #fbfcff; }
+.phone-topbar { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; }
+.phone-title { margin: 22px 0; font-size: 25px; font-weight: 850; }
+.phone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.phone-action, .contact-card { border: 1px solid #e0e5ef; border-radius: 18px; background: white; cursor: pointer; }
+.phone-action { min-height: 120px; display: grid; place-items: center; padding: 10px; font-weight: 750; }
+.icon { font-size: 42px; }
+.phone-icon { color: #21884a; }
+.target { outline: 4px solid #f2c94c; outline-offset: 3px; animation: pulse 1.2s infinite; }
+.contacts-view { margin-top: 18px; }
+.mini-title { margin: 0 0 8px; font-weight: 800; }
+.contact-card { width: 100%; display: flex; align-items: center; gap: 12px; margin-bottom: 9px; padding: 10px; text-align: left; }
+.avatar { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: #edf0f6; font-size: 24px; }
+.contact-card small { display: block; margin-top: 2px; color: #69748a; }
+.call-button { width: 100%; margin-top: 18px; padding: 16px; border: 0; border-radius: 16px; background: #238b4c; color: white; cursor: pointer; font-size: 18px; font-weight: 850; }
+.success-view { padding: 55px 10px; text-align: center; }
+.success-icon { width: 72px; height: 72px; display: grid; place-items: center; margin: 0 auto 18px; border-radius: 50%; background: #238b4c; color: white; font-size: 42px; font-weight: 900; }
+.success-view h3 { margin: 0; font-size: 24px; }
+.success-view p { color: #68738a; }
+.phone-home { width: 75px; height: 5px; margin: 10px auto 1px; border-radius: 10px; background: #4c5360; }
+.proof-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 24px; }
+.proof-strip div { padding: 17px; border: 1px solid #dfe5ef; border-radius: 16px; background: white; }
+.proof-strip strong, .proof-strip span { display: block; }
+.proof-strip strong { font-size: 21px; }
+.proof-strip span { margin-top: 3px; color: #69748a; font-size: 13px; }
+
+@keyframes pulse { 50% { box-shadow: 0 0 0 7px rgba(242, 201, 76, .18); } }
+
+@media (max-width: 760px) {
+  .hero, .dashboard { grid-template-columns: 1fr; flex-direction: column; }
+  .dashboard { display: grid; }
+  .proof-strip { grid-template-columns: repeat(2, 1fr); }
+}
