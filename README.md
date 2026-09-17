@@ -2,6 +2,8 @@
 
 > **Teach a person how to use a smartphone — then gradually stop helping them.**
 
+![VoiceCall Guru main demo](main-demo.png)
+
 VoiceCall Guru is an adaptive smartphone task teacher designed for people with low digital literacy or limited ability to rely on text. The first learning task is simple: **make a phone call to a family member**.
 
 Instead of only telling a learner what to tap, VoiceCall Guru observes the learner's progress, responds to mistakes, remembers what they struggled with, and reduces assistance as they demonstrate mastery.
