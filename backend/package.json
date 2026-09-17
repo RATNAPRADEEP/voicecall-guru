@@ -1,0 +1,12 @@
+{
+  "name": "voicecall-guru-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/handler.js && node --check src/learnerProfile.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.900.0"
+  }
+}
