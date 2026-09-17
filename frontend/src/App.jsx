@@ -1,4 +1,4 @@
-import { useReducer } from 'react';
+import { useEffect, useReducer } from 'react';
 import {
   ASSISTANCE,
   LESSON,
@@ -7,27 +7,35 @@ import {
   getMasteryLabel,
   startNextAttempt
 } from './learning/lessonEngine';
+import { clearLearningState, loadLearningState, saveLearningState } from './learning/persistence';
 
 function reducer(state, action) {
   switch (action.type) {
-    case 'ACTION':
-      return applyAction(state, action.value);
-    case 'NEXT_ATTEMPT':
-      return startNextAttempt(state);
-    case 'RESET':
-      return createInitialLearningState();
-    default:
-      return state;
+    case 'ACTION': return applyAction(state, action.value);
+    case 'NEXT_ATTEMPT': return startNextAttempt(state);
+    case 'RESET': return createInitialLearningState();
+    default: return state;
   }
 }
 
 export default function App() {
-  const [state, dispatch] = useReducer(reducer, undefined, createInitialLearningState);
+  const [state, dispatch] = useReducer(reducer, undefined, () =>
+    loadLearningState(createInitialLearningState)
+  );
   const step = LESSON[state.stepIndex];
   const progress = `${state.stepIndex + (state.completed ? 1 : 0)} / ${LESSON.length}`;
 
+  useEffect(() => {
+    saveLearningState(state);
+  }, [state]);
+
   function handleAction(action) {
     dispatch({ type: 'ACTION', value: action });
+  }
+
+  function resetProgress() {
+    clearLearningState();
+    dispatch({ type: 'RESET' });
   }
 
   return (
@@ -63,6 +71,9 @@ export default function App() {
               Practice Again — Less Help
             </button>
           )}
+          <button className="secondary-button" onClick={resetProgress}>
+            Reset Practice
+          </button>
         </aside>
 
         <section className="phone-stage" aria-label="Smartphone simulator">
@@ -87,10 +98,7 @@ export default function App() {
               {step.id !== 'phone' && !state.completed && (
                 <div className="contacts-view">
                   <p className="mini-title">Contacts</p>
-                  <button
-                    className={step.id === 'contact' ? 'contact-card target' : 'contact-card'}
-                    onClick={() => handleAction('contact')}
-                  >
+                  <button className={step.id === 'contact' ? 'contact-card target' : 'contact-card'} onClick={() => handleAction('contact')}>
                     <span className="avatar">👩</span>
                     <span><strong>Daughter</strong><small>Family</small></span>
                   </button>
@@ -102,9 +110,7 @@ export default function App() {
               )}
 
               {step.id === 'call' && !state.completed && (
-                <button className="call-button target" onClick={() => handleAction('call')}>
-                  ☎ Call
-                </button>
+                <button className="call-button target" onClick={() => handleAction('call')}>☎ Call</button>
               )}
 
               {state.completed && (
