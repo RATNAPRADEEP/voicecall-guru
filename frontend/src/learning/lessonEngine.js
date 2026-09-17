@@ -5,9 +5,9 @@ export const LESSON = [
 ];
 
 export const ASSISTANCE = {
-  1: 'Guide',
+  1: 'Independent',
   2: 'Hint',
-  3: 'Independent'
+  3: 'Guide'
 };
 
 export function createInitialLearningState() {
@@ -21,6 +21,21 @@ export function createInitialLearningState() {
   };
 }
 
+export function getStepInstruction(state) {
+  const step = LESSON[state.stepIndex];
+  if (!step) return '';
+
+  if (state.assistance === 3) {
+    return `Look here. ${step.prompt}`;
+  }
+
+  if (state.assistance === 2) {
+    return step.prompt;
+  }
+
+  return step.label + '.';
+}
+
 export function applyAction(state, action) {
   if (state.completed) return state;
 
@@ -31,7 +46,7 @@ export function applyAction(state, action) {
       ...state,
       mistakes: state.mistakes + 1,
       assistance: Math.min(3, state.assistance + 1),
-      message: 'That is not the step yet. Look for the highlighted action.'
+      message: 'That is not the step yet. I will give you a little more help.'
     };
   }
 
@@ -62,6 +77,7 @@ export function startNextAttempt(state) {
 }
 
 export function getMasteryLabel(state) {
+  if (state.completed && state.assistance === 1) return 'Independent';
   if (state.completed) return 'Complete';
   if (state.attempt >= 3 && state.assistance === 1) return 'Independent practice';
   return 'Learning';
