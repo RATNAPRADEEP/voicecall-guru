@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: VoiceCall Guru learner progress API
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Timeout: 10
+    MemorySize: 256
+    Environment:
+      Variables:
+        LEARNER_TABLE: !Ref LearnerTable
+
+Resources:
+  LearnerTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: learnerId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: learnerId
+          KeyType: HASH
+
+  LearnerApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - GET
+          - PUT
+
+  LearnerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/
+      Handler: src/handler.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref LearnerTable
+      Events:
+        GetLearner:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LearnerApi
+            Path: /learner/{learnerId}
+            Method: GET
+        PutLearner:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LearnerApi
+            Path: /learner/{learnerId}
+            Method: PUT
+
+Outputs:
+  LearnerApiUrl:
+    Description: VoiceCall Guru learner API endpoint
+    Value: !Sub 'https://${LearnerApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+  LearnerTableName:
+    Description: DynamoDB learner profile table
+    Value: !Ref LearnerTable
