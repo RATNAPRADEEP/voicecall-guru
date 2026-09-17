@@ -1,5 +1,5 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
+  DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
 } from '@aws-sdk/client-dynamodb';
@@ -11,48 +11,58 @@ const TABLE_NAME = process.env.LEARNER_TABLE;
 function response(statusCode, body) {
   return {
     statusCode,
-    headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
+    headers: {
+      'content-type': 'application/json',
+      'access-control-allow-origin': '*',
+    },
     body: JSON.stringify(body),
   };
 }
 
 export async function handler(event) {
   const learnerId = event?.pathParameters?.learnerId || 'demo-learner';
+  const method = event?.requestContext?.http?.method || event?.httpMethod;
 
   if (!TABLE_NAME) return response(500, { error: 'LEARNER_TABLE is not configured' });
 
+  if (!['GET', 'PUT'].includes(method)) {
+    return response(405, { error: 'Method not allowed' });
+  }
+
   try {
-    if ((event.requestContext?.http?.method || event.httpMethod) === 'GET') {
+    if (method === 'GET') {
       const result = await client.send(new GetItemCommand({
         TableName: TABLE_NAME,
         Key: { learnerId: { S: learnerId } },
       }));
 
-      return response(200, fromDynamoItem(result.Item ? unmarshall(result.Item) : null)
-        || createLearnerProfile({ learnerId }));
+      return response(
+        200,
+        fromDynamoItem(result.Item ? unmarshall(result.Item) : null)
+          || createLearnerProfile({ learnerId }),
+      );
     }
 
-    if ((event.requestContext?.http?.method || event.httpMethod) === 'PUT') {
-      const body = JSON.parse(event.body || '{}');
-      const profile = createLearnerProfile({ ...body, learnerId });
-      const item = toDynamoItem(profile);
-
-      await client.send(new PutItemCommand({
-        TableName: TABLE_NAME,
-        Item: marshall(item),
-      }));
-
-      return response(200, profile);
+    let body;
+    try {
+      body = JSON.parse(event.body || '{}');
+    } catch {
+      return response(400, { error: 'Request body must be valid JSON' });
     }
 
-    return response(405, { error: 'Method not allowed' });
+    const profile = createLearnerProfile({ ...body, learnerId });
+    await client.send(new PutItemCommand({
+      TableName: TABLE_NAME,
+      Item: marshall(toDynamoItem(profile)),
+    }));
+
+    return response(200, profile);
   } catch (error) {
     console.error('learner profile request failed', error);
     return response(500, { error: 'Unable to persist learner profile' });
   }
 }
 
-// Small local helpers keep the Lambda contract explicit without adding a framework.
 function marshall(item) {
   return {
     learnerId: { S: item.learnerId },
